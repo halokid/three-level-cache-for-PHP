@@ -1,9 +1,9 @@
 <?php
 /**
- * @JJyy
- * @todo three cache for php
- * APC, redis, static page
- */
+* @JJyy
+* @todo three cache for php
+* APC, redis, static page
+*/
 
 class Three_Cache
 {
@@ -18,19 +18,19 @@ class Three_Cache
     
     
     /**
-     * @todo set first cache APC env
-     */
+    * @todo set first cache APC env
+    */
     function set_first_adater()
     {
         /**
-         * some APC setting here
-         */
+        * some APC setting here
+        */
         $this->_adater[] = 1;
     }
     
     /**
-     * @todo set second cache redis env
-     */
+    * @todo set second cache redis env
+    */
     function set_second_adater($host, $port)
     {
         $r = new Redis();
@@ -41,8 +41,8 @@ class Three_Cache
     }
     
     /**
-     * @todo set third cache static pages env
-     */
+    * @todo set third cache static pages env
+    */
     function set_third_adater($cache_dir)
     {
         if(is_writable($cache_dir)) { //$cache_dir end with the "/"
@@ -55,30 +55,33 @@ class Three_Cache
     }
     
     /**
-     * @todo get adater env 
-     * @param $adater_number
-     * @return str
-     */
+    * @todo get adater env 
+    * @param $adater_number
+    * @return str
+    */
     function get_adater_env($adater_number)
     {
-         
+        
     }
     
     
     /**
-     * @todo store key-value, set keys
-     * @param $k, $v, if time==null , it means the cache forever
-     * @return bool
-     */
-    function set($key, $value, $time==null)
+    * @todo store key-value, set keys
+    * @param $k, $v, if time==null , it means the cache forever
+    * @return bool
+    */
+    function set($key, $value, $time=null)
     {
         foreach( $this->_adater as $i) {
             if( $i == 1) //APC set
             {
+                // if( !apc_fetch($key)) {
                 apc_store($key, $value, $time);
+                // }
             }
             else if($i==2)  //redis set
             {
+                // if(!$this->_redis->get($key)) {
                 if( $time == null )
                 {
                     $this->_redis->set($key, $value);
@@ -87,23 +90,27 @@ class Three_Cache
                 {
                     $this->_redis->setex($key, $time, $value);
                 }
+                // }
             }
             else if( $i== 3) //basic page set
             {
                 //the key is the static page filename
                 //will store in _cache_dir
+                // if( !file_exists($this->_cache_dir.$key) )
+                // {
                 $f = fopen( $this->_cache_dir.$key, 'a' );
                 fwrite($f, $value);
                 fclose($f);
+                // }
             }
         }
     }
     
     /**
-     * @todo get value for key
-     * @param $key
-     * @return $value
-     */
+    * @todo get value for key
+    * @param $key
+    * @return $value
+    */
     function get($key)
     {
         $v='';
@@ -111,12 +118,12 @@ class Three_Cache
             if( $i==1) //APC
             {
                 if( $v=apc_fetch($key) )
-                    break;
+                break;
             }
             else if ( $i==2) //redis
             {
                 if( $v=$this->_redis->get($key) )
-                    break;
+                break;
             }
             else if($i==3) //static page
             {
@@ -128,6 +135,14 @@ class Three_Cache
         return $v;
     }
 }
+
+
+$tc = new Three_Cache();
+$tc->set_first_adater();
+$tc->set_second_adater('127.0.0.1', 6379);
+$tc->set_third_adater('/opt/cache/');
+$tc->set('test_key', 'test_value');
+echo $tc->get('test_key');
 
 ?>
 
